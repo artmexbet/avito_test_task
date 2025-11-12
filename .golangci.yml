@@ -1,0 +1,22 @@
+version: "2"
+linters:
+    enable:
+        - govet
+        - errcheck
+        - staticcheck
+        - gofmt
+        - goimports
+        - gocognit
+        - gocritic
+        - lll
+        - unused
+        - deadcode
+        - structcheck
+        - varcheck
+        - ineffassign
+        - typecheck
+        - misspell
+        - gocyclo
+        - dupl
+        - revive
+        - nolintlint

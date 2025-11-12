@@ -6,14 +6,12 @@ package queries
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type PullRequest struct {
 	ID        string
 	Name      string
-	AuthorID  uuid.UUID
+	AuthorID  string
 	CreatedAt time.Time
 	MergedAt  time.Time
 }
@@ -25,7 +23,6 @@ type PullRequestsReviewer struct {
 }
 
 type Team struct {
-	ID        string
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -34,7 +31,7 @@ type Team struct {
 type User struct {
 	ID        string
 	Username  string
-	TeamID    string
+	TeamName  string
 	IsActive  bool
 	CreatedAt time.Time
 	UpdatedAt time.Time

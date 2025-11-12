@@ -17,9 +17,12 @@ var (
 )
 
 const AddUsers = `-- name: AddUsers :batchone
-INSERT INTO users (id, username, team_id) VALUES
-  ($1, $2, $3)
-RETURNING id, username, team_id, is_active, created_at, updated_at
+INSERT INTO users (id, username, team_name)
+VALUES ($1, $2, $3)
+ON CONFLICT (id) DO UPDATE SET username   = EXCLUDED.username,
+                               team_name    = EXCLUDED.team_name,
+                               updated_at = CURRENT_TIMESTAMP
+RETURNING id, username, team_name, is_active, created_at, updated_at
 `
 
 type AddUsersBatchResults struct {
@@ -31,7 +34,7 @@ type AddUsersBatchResults struct {
 type AddUsersParams struct {
 	ID       string
 	Username string
-	TeamID   string
+	TeamName string
 }
 
 func (q *Queries) AddUsers(ctx context.Context, arg []AddUsersParams) *AddUsersBatchResults {
@@ -40,7 +43,7 @@ func (q *Queries) AddUsers(ctx context.Context, arg []AddUsersParams) *AddUsersB
 		vals := []interface{}{
 			a.ID,
 			a.Username,
-			a.TeamID,
+			a.TeamName,
 		}
 		batch.Queue(AddUsers, vals...)
 	}
@@ -62,7 +65,7 @@ func (b *AddUsersBatchResults) QueryRow(f func(int, User, error)) {
 		err := row.Scan(
 			&i.ID,
 			&i.Username,
-			&i.TeamID,
+			&i.TeamName,
 			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -74,6 +77,107 @@ func (b *AddUsersBatchResults) QueryRow(f func(int, User, error)) {
 }
 
 func (b *AddUsersBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const AssignReviewerToPullRequest = `-- name: AssignReviewerToPullRequest :batchone
+INSERT INTO pull_requests_reviewers (pull_request_id, reviewer_id)
+VALUES ($1, $2)
+ON CONFLICT (pull_request_id, reviewer_id) DO NOTHING
+RETURNING pull_request_id, reviewer_id, assigned_at
+`
+
+type AssignReviewerToPullRequestBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type AssignReviewerToPullRequestParams struct {
+	PullRequestID string
+	ReviewerID    string
+}
+
+func (q *Queries) AssignReviewerToPullRequest(ctx context.Context, arg []AssignReviewerToPullRequestParams) *AssignReviewerToPullRequestBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.PullRequestID,
+			a.ReviewerID,
+		}
+		batch.Queue(AssignReviewerToPullRequest, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &AssignReviewerToPullRequestBatchResults{br, len(arg), false}
+}
+
+func (b *AssignReviewerToPullRequestBatchResults) QueryRow(f func(int, PullRequestsReviewer, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var i PullRequestsReviewer
+		if b.closed {
+			if f != nil {
+				f(t, i, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(&i.PullRequestID, &i.ReviewerID, &i.AssignedAt)
+		if f != nil {
+			f(t, i, err)
+		}
+	}
+}
+
+func (b *AssignReviewerToPullRequestBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const BatchExistsUserByID = `-- name: BatchExistsUserByID :batchone
+SELECT EXISTS (SELECT 1
+               FROM users
+               WHERE id = $1) AS "exists"
+`
+
+type BatchExistsUserByIDBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) BatchExistsUserByID(ctx context.Context, id []string) *BatchExistsUserByIDBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range id {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(BatchExistsUserByID, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &BatchExistsUserByIDBatchResults{br, len(id), false}
+}
+
+func (b *BatchExistsUserByIDBatchResults) QueryRow(f func(int, bool, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var exists bool
+		if b.closed {
+			if f != nil {
+				f(t, exists, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		row := b.br.QueryRow()
+		err := row.Scan(&exists)
+		if f != nil {
+			f(t, exists, err)
+		}
+	}
+}
+
+func (b *BatchExistsUserByIDBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

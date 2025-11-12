@@ -4,3 +4,123 @@
 // source: users.sql
 
 package queries
+
+import (
+	"context"
+)
+
+const ExistsUserByID = `-- name: ExistsUserByID :one
+SELECT EXISTS (SELECT 1
+               FROM users
+               WHERE id = $1) AS "exists"
+`
+
+func (q *Queries) ExistsUserByID(ctx context.Context, id string) (bool, error) {
+	row := q.db.QueryRow(ctx, ExistsUserByID, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const GetActiveUsersByTeamID = `-- name: GetActiveUsersByTeamID :many
+SELECT id, username, team_name, is_active, created_at, updated_at
+FROM users
+WHERE team_name = $1 AND is_active = TRUE
+`
+
+func (q *Queries) GetActiveUsersByTeamID(ctx context.Context, teamName string) ([]User, error) {
+	rows, err := q.db.Query(ctx, GetActiveUsersByTeamID, teamName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.TeamName,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const GetUserByID = `-- name: GetUserByID :one
+SELECT id, username, team_name, is_active, created_at, updated_at
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRow(ctx, GetUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.TeamName,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const GetUsersByTeamID = `-- name: GetUsersByTeamID :many
+SELECT id, username, team_name, is_active, created_at, updated_at
+FROM users
+WHERE team_name = $1
+`
+
+func (q *Queries) GetUsersByTeamID(ctx context.Context, teamName string) ([]User, error) {
+	rows, err := q.db.Query(ctx, GetUsersByTeamID, teamName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.TeamName,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SetIsActiveByID = `-- name: SetIsActiveByID :exec
+UPDATE users
+SET is_active  = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+`
+
+type SetIsActiveByIDParams struct {
+	ID       string
+	IsActive bool
+}
+
+func (q *Queries) SetIsActiveByID(ctx context.Context, arg SetIsActiveByIDParams) error {
+	_, err := q.db.Exec(ctx, SetIsActiveByID, arg.ID, arg.IsActive)
+	return err
+}

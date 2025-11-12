@@ -1,0 +1,14 @@
+name: "avito-backend"
+services:
+  postgres:
+    image: postgres:latest
+    env_file:
+      - ./.env.example
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../migrations:/docker-entrypoint-initdb.d
+
+volumes:
+  pgdata:

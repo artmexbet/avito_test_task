@@ -21,7 +21,7 @@ type UserRepository struct {
 	postgres iUserPostgres
 }
 
-func New(postgres iUserPostgres) *UserRepository {
+func NewUserRepository(postgres iUserPostgres) *UserRepository {
 	return &UserRepository{postgres: postgres}
 }
 

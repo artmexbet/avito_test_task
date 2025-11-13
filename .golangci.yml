@@ -1,22 +1,28 @@
 version: "2"
 linters:
-    enable:
-        - govet
-        - errcheck
-        - staticcheck
-        - gofmt
-        - goimports
-        - gocognit
-        - gocritic
-        - lll
-        - unused
-        - deadcode
-        - structcheck
-        - varcheck
-        - ineffassign
-        - typecheck
-        - misspell
-        - gocyclo
-        - dupl
-        - revive
-        - nolintlint
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - gocognit
+    - gocritic
+    - lll
+    - unused
+    - exhaustruct
+    - ineffassign
+    - misspell
+    - gocyclo
+    - dupl
+    - revive
+    - nolintlint
+    - funlen
+    - sloglint
+  settings:
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true
+formatters:
+  enable:
+    - goimports
+    - gofmt

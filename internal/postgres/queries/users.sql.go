@@ -22,14 +22,14 @@ func (q *Queries) ExistsUserByID(ctx context.Context, id string) (bool, error) {
 	return exists, err
 }
 
-const GetActiveUsersByTeamID = `-- name: GetActiveUsersByTeamID :many
+const GetActiveUsersByTeamName = `-- name: GetActiveUsersByTeamName :many
 SELECT id, username, team_name, is_active, created_at, updated_at
 FROM users
 WHERE team_name = $1 AND is_active = TRUE
 `
 
-func (q *Queries) GetActiveUsersByTeamID(ctx context.Context, teamName string) ([]User, error) {
-	rows, err := q.db.Query(ctx, GetActiveUsersByTeamID, teamName)
+func (q *Queries) GetActiveUsersByTeamName(ctx context.Context, teamName string) ([]User, error) {
+	rows, err := q.db.Query(ctx, GetActiveUsersByTeamName, teamName)
 	if err != nil {
 		return nil, err
 	}
@@ -75,14 +75,14 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	return i, err
 }
 
-const GetUsersByTeamID = `-- name: GetUsersByTeamID :many
+const GetUsersByTeamName = `-- name: GetUsersByTeamName :many
 SELECT id, username, team_name, is_active, created_at, updated_at
 FROM users
 WHERE team_name = $1
 `
 
-func (q *Queries) GetUsersByTeamID(ctx context.Context, teamName string) ([]User, error) {
-	rows, err := q.db.Query(ctx, GetUsersByTeamID, teamName)
+func (q *Queries) GetUsersByTeamName(ctx context.Context, teamName string) ([]User, error) {
+	rows, err := q.db.Query(ctx, GetUsersByTeamName, teamName)
 	if err != nil {
 		return nil, err
 	}
@@ -108,19 +108,19 @@ func (q *Queries) GetUsersByTeamID(ctx context.Context, teamName string) ([]User
 	return items, nil
 }
 
-const SetIsActiveByID = `-- name: SetIsActiveByID :exec
+const SetUserIsActiveByID = `-- name: SetUserIsActiveByID :exec
 UPDATE users
 SET is_active  = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 `
 
-type SetIsActiveByIDParams struct {
+type SetUserIsActiveByIDParams struct {
 	ID       string
 	IsActive bool
 }
 
-func (q *Queries) SetIsActiveByID(ctx context.Context, arg SetIsActiveByIDParams) error {
-	_, err := q.db.Exec(ctx, SetIsActiveByID, arg.ID, arg.IsActive)
+func (q *Queries) SetUserIsActiveByID(ctx context.Context, arg SetUserIsActiveByIDParams) error {
+	_, err := q.db.Exec(ctx, SetUserIsActiveByID, arg.ID, arg.IsActive)
 	return err
 }

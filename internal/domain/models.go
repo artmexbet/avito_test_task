@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// User represents a user in the system.
 type User struct {
 	ID        string `json:"user_id"`
 	Username  string `json:"username"`
@@ -11,6 +12,7 @@ type User struct {
 	UpdatedAt time.Time
 }
 
+// PullRequest represents the status of a pull request.
 type PullRequest struct {
 	ID        string   `json:"pull_request_id"`
 	Name      string   `json:"pull_request_name"`
@@ -22,6 +24,7 @@ type PullRequest struct {
 	MergedAt  time.Time
 }
 
+// Team represents a team in the system.
 type Team struct {
 	Name      string `json:"team_name"`
 	Members   []User `json:"members"`
@@ -29,6 +32,7 @@ type Team struct {
 	UpdatedAt time.Time
 }
 
+// Error defines the type for error codes.
 type Error struct {
 	Message string    `json:"message"`
 	Code    ErrorCode `json:"code"`

@@ -8,11 +8,13 @@ import (
 
 //go:generate sqlc generate -f ./queries/sqlc.yaml
 
+// Postgres is an abstraction over Postgres database.
 type Postgres struct {
 	pool    *pgxpool.Pool
 	queries *queries.Queries
 }
 
+// New creates a new Postgres instance.
 func New(pool *pgxpool.Pool) *Postgres {
 	return &Postgres{
 		pool:    pool,

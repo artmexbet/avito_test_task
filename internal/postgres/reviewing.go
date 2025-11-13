@@ -1,0 +1,71 @@
+package postgres
+
+import (
+	"avito_test_task/internal/domain"
+	"avito_test_task/internal/postgres/queries"
+	"context"
+	"errors"
+	"fmt"
+)
+
+func (p *Postgres) AssignReviewersToPR(ctx context.Context, prID string, reviewerIDs []string) error {
+	tx, err := p.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	q := p.queries.WithTx(tx)
+
+	params := make([]queries.AssignReviewerToPullRequestParams, len(reviewerIDs))
+	for i, reviewerID := range reviewerIDs {
+		params[i] = queries.AssignReviewerToPullRequestParams{
+			PullRequestID: prID,
+			ReviewerID:    reviewerID,
+		}
+	}
+	br := q.AssignReviewerToPullRequest(ctx, params)
+	defer br.Close() //nolint:errcheck
+
+	errs := make([]error, 0, len(reviewerIDs))
+	br.QueryRow(func(_ int, _ queries.PullRequestsReviewer, err error) {
+		if err != nil {
+			errs = append(errs, err)
+		}
+	})
+	return errors.Join(errs...)
+}
+
+func (p *Postgres) GetReviewersByPRID(ctx context.Context, prID string) ([]domain.User, error) {
+	users, err := p.queries.GetReviewersByPullRequestID(ctx, prID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting reviewers by PR ID: %w", err)
+	}
+
+	var reviewers []domain.User
+	for _, u := range users {
+		reviewers = append(reviewers, u.ToDomain())
+	}
+	return reviewers, nil
+}
+
+func (p *Postgres) ReassignReviewer(ctx context.Context, prID, newReviewerID, oldReviewerID string) error {
+	return p.queries.ReassignReviewerForPullRequest(ctx, queries.ReassignReviewerForPullRequestParams{
+		PullRequestID: prID,
+		ReviewerID:    newReviewerID,
+		ReviewerID_2:  oldReviewerID,
+	})
+}
+
+func (p *Postgres) GetUsersReviewingPR(ctx context.Context, userID string) ([]domain.PullRequest, error) {
+	prs, err := p.queries.GetUsersReviewingPullRequest(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting PRs being reviewed by user: %w", err)
+	}
+
+	var pullRequests []domain.PullRequest
+	for _, pr := range prs {
+		pullRequests = append(pullRequests, pr.ToDomain())
+	}
+	return pullRequests, nil
+}

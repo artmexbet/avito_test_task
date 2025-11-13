@@ -21,18 +21,18 @@ SELECT *
 FROM users
 WHERE id = $1;
 
--- name: GetUsersByTeamID :many
+-- name: GetUsersByTeamName :many
 SELECT *
 FROM users
 WHERE team_name = $1;
 
--- name: SetIsActiveByID :exec
+-- name: SetUserIsActiveByID :exec
 UPDATE users
 SET is_active  = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
--- name: GetActiveUsersByTeamID :many
+-- name: GetActiveUsersByTeamName :many
 SELECT *
 FROM users
 WHERE team_name = $1 AND is_active = TRUE;

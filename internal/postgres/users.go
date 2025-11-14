@@ -1,13 +1,12 @@
 package postgres
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
 	"github.com/artmexbet/avito_test_task/internal/domain"
 	"github.com/artmexbet/avito_test_task/internal/postgres/queries"
-
-	"context"
-	"fmt"
 )
 
 func (p *Postgres) AddUsers(ctx context.Context, users []domain.User) ([]domain.User, error) {

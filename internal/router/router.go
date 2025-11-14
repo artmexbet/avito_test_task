@@ -1,12 +1,12 @@
 package router
 
 import (
-	"github.com/artmexbet/avito_test_task/pkg/config"
-
 	"context"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/artmexbet/avito_test_task/pkg/config"
 )
 
 type iUserService interface {

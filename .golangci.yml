@@ -17,6 +17,7 @@ linters:
     - nolintlint
     - funlen
     - sloglint
+    - interfacebloat
   settings:
     revive:
       rules:
@@ -26,3 +27,10 @@ formatters:
   enable:
     - goimports
     - gofmt
+    - gci
+  settings:
+    gci:
+      sections:
+        - standard # встроенные пакеты
+        - default # внешние пакеты
+        - prefix(github.com/artmexbet/avito_test_task) # внутренние пакеты

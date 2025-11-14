@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"github.com/artmexbet/avito_test_task/internal/domain"
-
 	"context"
+
+	"github.com/artmexbet/avito_test_task/internal/domain"
 )
 
 type iReviewersPostgres interface {

@@ -1,18 +1,18 @@
 package main
 
 import (
-	"github.com/artmexbet/avito_test_task/internal/postgres"
-	"github.com/artmexbet/avito_test_task/internal/repository"
-	"github.com/artmexbet/avito_test_task/internal/router"
-	"github.com/artmexbet/avito_test_task/internal/service"
-	"github.com/artmexbet/avito_test_task/pkg/config"
-
 	"context"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/artmexbet/avito_test_task/internal/postgres"
+	"github.com/artmexbet/avito_test_task/internal/repository"
+	"github.com/artmexbet/avito_test_task/internal/router"
+	"github.com/artmexbet/avito_test_task/internal/service"
+	"github.com/artmexbet/avito_test_task/pkg/config"
 )
 
 func main() {

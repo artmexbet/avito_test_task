@@ -1,11 +1,10 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/artmexbet/avito_test_task/internal/domain"
-
-	"context"
 )
 
 type iPRPostgres interface {

@@ -1,10 +1,10 @@
 package postgres
 
 import (
-	"github.com/artmexbet/avito_test_task/internal/domain"
-
 	"context"
 	"fmt"
+
+	"github.com/artmexbet/avito_test_task/internal/domain"
 )
 
 func (p *Postgres) GetTeamByName(ctx context.Context, teamName string) (domain.Team, error) {

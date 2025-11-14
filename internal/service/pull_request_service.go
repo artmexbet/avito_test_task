@@ -1,12 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"slices"
 
 	"github.com/artmexbet/avito_test_task/internal/domain"
-
-	"context"
 )
 
 type iPullRequestRepository interface {

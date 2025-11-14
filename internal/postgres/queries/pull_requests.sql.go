@@ -34,6 +34,21 @@ func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestPa
 	return i, err
 }
 
+const ExistsPullRequestByID = `-- name: ExistsPullRequestByID :one
+SELECT EXISTS (
+    SELECT 1
+    FROM pull_requests
+    WHERE id = $1
+) AS "exists"
+`
+
+func (q *Queries) ExistsPullRequestByID(ctx context.Context, id string) (bool, error) {
+	row := q.db.QueryRow(ctx, ExistsPullRequestByID, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const GetPullRequestByID = `-- name: GetPullRequestByID :one
 SELECT id, name, author_id, created_at, merged_at
 FROM pull_requests

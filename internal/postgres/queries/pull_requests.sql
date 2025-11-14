@@ -3,6 +3,13 @@ INSERT INTO pull_requests (id, name, author_id)
 VALUES ($1, $2, $3)
 RETURNING *;
 
+-- name: ExistsPullRequestByID :one
+SELECT EXISTS (
+    SELECT 1
+    FROM pull_requests
+    WHERE id = $1
+) AS "exists";
+
 -- name: GetPullRequestByID :one
 SELECT *
 FROM pull_requests

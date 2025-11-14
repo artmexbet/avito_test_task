@@ -10,6 +10,13 @@ FROM users u
 JOIN pull_requests_reviewers prr ON u.id = prr.reviewer_id
 WHERE prr.pull_request_id = $1;
 
+-- name: IsUserReviewerForPullRequest :one
+SELECT EXISTS (
+    SELECT 1
+    FROM pull_requests_reviewers
+    WHERE pull_request_id = $1 AND reviewer_id = $2
+) AS "exists";
+
 -- name: ReassignReviewerForPullRequest :exec
 UPDATE pull_requests_reviewers
 SET reviewer_id = $2

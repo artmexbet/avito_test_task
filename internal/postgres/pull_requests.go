@@ -1,10 +1,11 @@
 package postgres
 
 import (
-	"avito_test_task/internal/domain"
-	"avito_test_task/internal/postgres/queries"
 	"context"
 	"fmt"
+
+	"github.com/artmexbet/avito_test_task/internal/domain"
+	"github.com/artmexbet/avito_test_task/internal/postgres/queries"
 )
 
 func (p *Postgres) CreatePullRequest(ctx context.Context, pr domain.PullRequest) (domain.PullRequest, error) {
@@ -58,4 +59,12 @@ func (p *Postgres) MergePullRequest(ctx context.Context, prID string) (domain.Pu
 	}
 
 	return pr.ToDomain(), nil
+}
+
+func (p *Postgres) ExistsPullRequest(ctx context.Context, prID string) (bool, error) {
+	exists, err := p.queries.ExistsPullRequestByID(ctx, prID)
+	if err != nil {
+		return false, fmt.Errorf("error checking if pull request exists: %w", err)
+	}
+	return exists, nil
 }

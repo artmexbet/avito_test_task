@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"avito_test_task/internal/domain"
+	"github.com/artmexbet/avito_test_task/internal/domain"
 
 	"context"
 )
@@ -12,7 +12,7 @@ type iUserPostgres interface {
 	ExistsUserByID(ctx context.Context, userID string) (bool, error)
 	GetUserByID(ctx context.Context, userID string) (domain.User, error)
 	GetUsersByTeamName(ctx context.Context, teamName string) ([]domain.User, error)
-	SetUserIsActive(ctx context.Context, userID string, isActive bool) error
+	SetUserIsActive(ctx context.Context, userID string, isActive bool) (domain.User, error)
 	GetActiveUsersByTeamName(ctx context.Context, teamName string) ([]domain.User, error)
 }
 
@@ -51,7 +51,7 @@ func (r *UserRepository) GetByTeamName(ctx context.Context, teamName string) ([]
 }
 
 // SetIsActive sets the active status of a user
-func (r *UserRepository) SetIsActive(ctx context.Context, userID string, isActive bool) error {
+func (r *UserRepository) SetIsActive(ctx context.Context, userID string, isActive bool) (domain.User, error) {
 	return r.postgres.SetUserIsActive(ctx, userID, isActive)
 }
 

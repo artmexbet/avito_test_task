@@ -1,6 +1,6 @@
 package router
 
-import "avito_test_task/internal/domain"
+import "github.com/artmexbet/avito_test_task/internal/domain"
 
 // ErrorResponse represents a standard error response structure.
 type ErrorResponse struct {

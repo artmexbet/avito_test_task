@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"avito_test_task/internal/postgres/queries"
+	"github.com/artmexbet/avito_test_task/internal/postgres/queries"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

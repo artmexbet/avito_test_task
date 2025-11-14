@@ -1,7 +1,7 @@
 package router
 
 import (
-	"avito_test_task/pkg/config"
+	"github.com/artmexbet/avito_test_task/pkg/config"
 
 	"context"
 	"fmt"
@@ -17,6 +17,9 @@ type iPullRequestService interface {
 	// Define pull request service methods here
 }
 
+type iTeamService interface {
+}
+
 type Config struct {
 	Host string `yaml:"host" env:"HOST"`
 	Port int    `yaml:"port" env:"PORT"`
@@ -28,9 +31,15 @@ type Router struct {
 	router             *fiber.App
 	userService        iUserService
 	pullRequestService iPullRequestService
+	teamService        iTeamService
 }
 
-func New(config config.RouterConfig, userService iUserService, pullRequestService iPullRequestService) *Router {
+func New(
+	config config.RouterConfig,
+	userService iUserService,
+	pullRequestService iPullRequestService,
+	teamService iTeamService,
+) *Router {
 	app := fiber.New()
 
 	router := &Router{
@@ -38,6 +47,7 @@ func New(config config.RouterConfig, userService iUserService, pullRequestServic
 		router:             app,
 		userService:        userService,
 		pullRequestService: pullRequestService,
+		teamService:        teamService,
 	}
 	router.initRoutes()
 

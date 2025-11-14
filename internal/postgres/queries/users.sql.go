@@ -108,11 +108,12 @@ func (q *Queries) GetUsersByTeamName(ctx context.Context, teamName string) ([]Us
 	return items, nil
 }
 
-const SetUserIsActiveByID = `-- name: SetUserIsActiveByID :exec
+const SetUserIsActiveByID = `-- name: SetUserIsActiveByID :one
 UPDATE users
 SET is_active  = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
+RETURNING id, username, team_name, is_active, created_at, updated_at
 `
 
 type SetUserIsActiveByIDParams struct {
@@ -120,7 +121,16 @@ type SetUserIsActiveByIDParams struct {
 	IsActive bool
 }
 
-func (q *Queries) SetUserIsActiveByID(ctx context.Context, arg SetUserIsActiveByIDParams) error {
-	_, err := q.db.Exec(ctx, SetUserIsActiveByID, arg.ID, arg.IsActive)
-	return err
+func (q *Queries) SetUserIsActiveByID(ctx context.Context, arg SetUserIsActiveByIDParams) (User, error) {
+	row := q.db.QueryRow(ctx, SetUserIsActiveByID, arg.ID, arg.IsActive)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.TeamName,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

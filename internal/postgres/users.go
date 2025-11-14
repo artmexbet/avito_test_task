@@ -1,9 +1,10 @@
 package postgres
 
 import (
-	"avito_test_task/internal/domain"
-	"avito_test_task/internal/postgres/queries"
 	"errors"
+
+	"github.com/artmexbet/avito_test_task/internal/domain"
+	"github.com/artmexbet/avito_test_task/internal/postgres/queries"
 
 	"context"
 	"fmt"
@@ -83,25 +84,26 @@ func (p *Postgres) GetUsersByTeamName(ctx context.Context, teamName string) ([]d
 	return domainUsers, nil
 }
 
-func (p *Postgres) SetUserIsActive(ctx context.Context, userID string, isActive bool) error {
+func (p *Postgres) SetUserIsActive(ctx context.Context, userID string, isActive bool) (domain.User, error) {
 	tx, err := p.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("error starting transaction: %w", err)
+		return domain.User{}, fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck  // safe to call even after commit
 	q := p.queries.WithTx(tx)
 
-	if err := q.SetUserIsActiveByID(ctx, queries.SetUserIsActiveByIDParams{
+	user, err := q.SetUserIsActiveByID(ctx, queries.SetUserIsActiveByIDParams{
 		ID:       userID,
 		IsActive: isActive,
-	}); err != nil {
-		return fmt.Errorf("error setting user is_active: %w", err)
+	})
+	if err != nil {
+		return domain.User{}, fmt.Errorf("error setting user %s is_active: %w", userID, err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return domain.User{}, fmt.Errorf("error committing transaction: %w", err)
 	}
-	return nil
+	return user.ToDomain(), nil
 }
 
 func (p *Postgres) GetActiveUsersByTeamName(ctx context.Context, teamName string) ([]domain.User, error) {

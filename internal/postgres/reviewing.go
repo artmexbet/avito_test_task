@@ -1,11 +1,12 @@
 package postgres
 
 import (
-	"avito_test_task/internal/domain"
-	"avito_test_task/internal/postgres/queries"
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/artmexbet/avito_test_task/internal/domain"
+	"github.com/artmexbet/avito_test_task/internal/postgres/queries"
 )
 
 func (p *Postgres) AssignReviewersToPR(ctx context.Context, prID string, reviewerIDs []string) error {
@@ -68,4 +69,16 @@ func (p *Postgres) GetUsersReviewingPR(ctx context.Context, userID string) ([]do
 		pullRequests = append(pullRequests, pr.ToDomain())
 	}
 	return pullRequests, nil
+}
+
+func (p *Postgres) IsReviewerAssignedToPR(ctx context.Context, prID, reviewerID string) (bool, error) {
+	assigned, err := p.queries.IsUserReviewerForPullRequest(ctx, queries.IsUserReviewerForPullRequestParams{
+		PullRequestID: prID,
+		ReviewerID:    reviewerID,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return assigned, nil
 }

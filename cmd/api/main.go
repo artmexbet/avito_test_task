@@ -1,11 +1,11 @@
 package main
 
 import (
-	"avito_test_task/internal/postgres"
-	"avito_test_task/internal/repository"
-	"avito_test_task/internal/router"
-	"avito_test_task/internal/service"
-	"avito_test_task/pkg/config"
+	"github.com/artmexbet/avito_test_task/internal/postgres"
+	"github.com/artmexbet/avito_test_task/internal/repository"
+	"github.com/artmexbet/avito_test_task/internal/router"
+	"github.com/artmexbet/avito_test_task/internal/service"
+	"github.com/artmexbet/avito_test_task/pkg/config"
 
 	"context"
 	"os"
@@ -32,11 +32,13 @@ func main() {
 	userRepository := repository.NewUserRepository(pg)
 	reviewersRepository := repository.NewReviewersRepository(pg)
 	pullRequestRepository := repository.NewPRRepository(pg)
+	teamRepository := repository.NewTeamRepository(pg)
 
-	prService := service.NewPullRequestService(pullRequestRepository, reviewersRepository)
+	prService := service.NewPullRequestService(pullRequestRepository, reviewersRepository, userRepository)
 	userService := service.NewUserService(userRepository)
+	teamService := service.NewTeamService(teamRepository, userRepository)
 
-	_router := router.New(cfg.Router, userService, prService)
+	_router := router.New(cfg.Router, userService, prService, teamService)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)

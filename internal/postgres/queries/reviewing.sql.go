@@ -75,6 +75,26 @@ func (q *Queries) GetUsersReviewingPullRequest(ctx context.Context, reviewerID s
 	return items, nil
 }
 
+const IsUserReviewerForPullRequest = `-- name: IsUserReviewerForPullRequest :one
+SELECT EXISTS (
+    SELECT 1
+    FROM pull_requests_reviewers
+    WHERE pull_request_id = $1 AND reviewer_id = $2
+) AS "exists"
+`
+
+type IsUserReviewerForPullRequestParams struct {
+	PullRequestID string
+	ReviewerID    string
+}
+
+func (q *Queries) IsUserReviewerForPullRequest(ctx context.Context, arg IsUserReviewerForPullRequestParams) (bool, error) {
+	row := q.db.QueryRow(ctx, IsUserReviewerForPullRequest, arg.PullRequestID, arg.ReviewerID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const ReassignReviewerForPullRequest = `-- name: ReassignReviewerForPullRequest :exec
 UPDATE pull_requests_reviewers
 SET reviewer_id = $2

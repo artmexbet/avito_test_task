@@ -24,6 +24,21 @@ func (q *Queries) AddTeam(ctx context.Context, name string) (Team, error) {
 	return i, err
 }
 
+const ExistsTeamByName = `-- name: ExistsTeamByName :one
+SELECT EXISTS (
+    SELECT 1
+    FROM teams
+    WHERE name = $1
+) AS exists
+`
+
+func (q *Queries) ExistsTeamByName(ctx context.Context, name string) (bool, error) {
+	row := q.db.QueryRow(ctx, ExistsTeamByName, name)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const GetTeamByName = `-- name: GetTeamByName :one
 SELECT name, created_at, updated_at
 FROM teams

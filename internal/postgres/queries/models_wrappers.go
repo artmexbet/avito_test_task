@@ -1,6 +1,6 @@
 package queries
 
-import "avito_test_task/internal/domain"
+import "github.com/artmexbet/avito_test_task/internal/domain"
 
 // ToDomain converts the User model to the domain User model.
 func (m *User) ToDomain() domain.User {

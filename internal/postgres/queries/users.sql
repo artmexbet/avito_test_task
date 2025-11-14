@@ -26,11 +26,12 @@ SELECT *
 FROM users
 WHERE team_name = $1;
 
--- name: SetUserIsActiveByID :exec
+-- name: SetUserIsActiveByID :one
 UPDATE users
 SET is_active  = $2,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;
 
 -- name: GetActiveUsersByTeamName :many
 SELECT *

@@ -1,0 +1,12 @@
+dir: '{{.InterfaceDir}}'
+filename: "{{.InterfaceName}}_mock.go"
+structname: "{{.Mock}}{{.InterfaceName}}"
+formatter: goimports
+pkgname: '{{.SrcPackageName}}'
+recursive: true
+template: testify
+packages:
+  github.com/artmexbet/avito_test_task/internal/service:
+    config:
+      filename: "service_mock.go"
+      all: true

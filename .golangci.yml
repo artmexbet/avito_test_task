@@ -23,6 +23,8 @@ linters:
       rules:
         - name: package-comments
           disabled: true
+run:
+  tests: false
 formatters:
   enable:
     - goimports

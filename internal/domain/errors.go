@@ -9,4 +9,5 @@ var (
 	ErrPRNotFound           = errors.New("pull request not found")
 	ErrReviewerNotAssigned  = errors.New("reviewer not assigned to the pull request")
 	ErrNoAvailableReviewers = errors.New("no available reviewers to assign")
+	ErrPRAlreadyMerged      = errors.New("pull request already merged")
 )

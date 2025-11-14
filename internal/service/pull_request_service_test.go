@@ -270,7 +270,7 @@ func (s *PullRequestServiceTestSuite) TestMerge() {
 					{ID: "user-1", Username: "alice"},
 					{ID: "user-2", Username: "bob"},
 				}
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, nil).Once()
 				mockPRRepo.EXPECT().Merge(ctx, "pr-1").Return(mergedPR, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(reviewers, nil).Once()
 			},
@@ -284,7 +284,7 @@ func (s *PullRequestServiceTestSuite) TestMerge() {
 			name: "PR not found",
 			prID: "non-existent-pr",
 			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository) {
-				mockPRRepo.EXPECT().Exists(ctx, "non-existent-pr").Return(false, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "non-existent-pr").Return(domain.PullRequest{}, domain.ErrPRNotFound).Once()
 			},
 			wantErr:   true,
 			wantErrIs: domain.ErrPRNotFound,
@@ -293,15 +293,16 @@ func (s *PullRequestServiceTestSuite) TestMerge() {
 			name: "exists check error",
 			prID: "pr-1",
 			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository) {
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(false, errors.New("database error")).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, domain.ErrPRNotFound).Once()
 			},
-			wantErr: true,
+			wantErr:   true,
+			wantErrIs: domain.ErrPRNotFound,
 		},
 		{
 			name: "merge error",
 			prID: "pr-1",
 			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository) {
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, nil).Once()
 				mockPRRepo.EXPECT().Merge(ctx, "pr-1").Return(domain.PullRequest{}, errors.New("merge failed")).Once()
 			},
 			wantErr: true,
@@ -311,11 +312,22 @@ func (s *PullRequestServiceTestSuite) TestMerge() {
 			prID: "pr-1",
 			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository) {
 				mergedPR := domain.PullRequest{ID: "pr-1", Status: domain.PRStatusMerged}
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, nil).Once()
 				mockPRRepo.EXPECT().Merge(ctx, "pr-1").Return(mergedPR, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return([]domain.User{}, errors.New("failed to get reviewers")).Once()
 			},
 			wantErr: true,
+		},
+		{
+			name: "pr already merged",
+			prID: "pr-1",
+			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository) {
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{
+					Status: domain.PRStatusMerged,
+				}, nil).Once()
+			},
+			wantErr:   true,
+			wantErrIs: domain.ErrPRAlreadyMerged,
 		},
 	}
 
@@ -582,6 +594,25 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, errors.New("failed to get PR")).Once()
 			},
 			wantErr: true,
+		},
+		{
+			name:          "cannot reassign, not enough active users",
+			prID:          "pr-1",
+			oldReviewerID: "user-1",
+			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository, mockUserRepo *mockiPRUserRepository) {
+				assignedReviewers := []domain.User{
+					{ID: "user-1", Username: "alice", TeamName: "solo-team"},
+				}
+				activeUsers := []domain.User{
+					{ID: "user-1", Username: "alice", TeamName: "solo-team", IsActive: true},
+				}
+				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockUserRepo.EXPECT().ExistsByID(ctx, "user-1").Return(true, nil).Once()
+				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(assignedReviewers, nil).Once()
+				mockUserRepo.EXPECT().GetActiveByTeamName(ctx, "solo-team").Return(activeUsers, nil).Once()
+			},
+			wantErr:   true,
+			wantErrIs: domain.ErrNoAvailableReviewers,
 		},
 	}
 

@@ -96,12 +96,14 @@ func (p *PullRequestService) Create(ctx context.Context, pr domain.PullRequest) 
 
 func (p *PullRequestService) Merge(ctx context.Context, prID string) (domain.PullRequest, error) {
 	// check if PR exists
-	exists, err := p.pullRequestRepo.Exists(ctx, prID)
+	pr, err := p.pullRequestRepo.GetByID(ctx, prID)
 	if err != nil {
 		return domain.PullRequest{}, fmt.Errorf("error checking existing pull request: %w", err)
 	}
-	if !exists {
-		return domain.PullRequest{}, fmt.Errorf("pull request with ID %s: %w", prID, domain.ErrPRNotFound)
+
+	// check if PR is already merged
+	if pr.Status == domain.PRStatusMerged {
+		return domain.PullRequest{}, fmt.Errorf("pull request with ID %s: %w", prID, domain.ErrPRAlreadyMerged)
 	}
 
 	mergedPR, err := p.pullRequestRepo.Merge(ctx, prID)

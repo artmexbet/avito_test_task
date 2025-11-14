@@ -4,20 +4,27 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/artmexbet/avito_test_task/internal/domain"
 	"github.com/artmexbet/avito_test_task/pkg/config"
 )
 
 type iUserService interface {
-	// Define user service methods here
+	SetIsActive(ctx context.Context, userID string, isActive bool) (domain.User, error)
 }
 
 type iPullRequestService interface {
-	// Define pull request service methods here
+	GetReviewingPRs(ctx context.Context, userID string) ([]domain.PullRequest, error)
+	Create(ctx context.Context, pr domain.PullRequest) (domain.PullRequest, error)
+	Merge(ctx context.Context, prID string) (domain.PullRequest, error)
+	ReassignReviewer(ctx context.Context, prID, oldReviewerID string) (*domain.PullRequest, string, error)
 }
 
 type iTeamService interface {
+	Add(ctx context.Context, team domain.Team) (domain.Team, error)
+	Get(ctx context.Context, teamName string) (domain.Team, error)
 }
 
 type Config struct {
@@ -28,7 +35,9 @@ type Config struct {
 type Router struct {
 	config config.RouterConfig
 
-	router             *fiber.App
+	router    *fiber.App
+	validator *validator.Validate
+
 	userService        iUserService
 	pullRequestService iPullRequestService
 	teamService        iTeamService
@@ -48,6 +57,7 @@ func New(
 		userService:        userService,
 		pullRequestService: pullRequestService,
 		teamService:        teamService,
+		validator:          validator.New(validator.WithRequiredStructEnabled()),
 	}
 	router.initRoutes()
 
@@ -55,7 +65,18 @@ func New(
 }
 
 func (r *Router) initRoutes() {
+	teams := r.router.Group("/teams")
+	teams.Post("/add", r.addTeam)
+	teams.Get("/get", r.getTeam)
 
+	users := r.router.Group("/users")
+	users.Post("/setIsActive", r.setUserIsActive)
+	users.Get("/getReview", r.getUserReview)
+
+	prs := r.router.Group("/pullRequest")
+	prs.Post("/create", r.createPullRequest)
+	prs.Post("/merge", r.mergePullRequest)
+	prs.Post("/reassign", r.reassignReviewer)
 }
 
 func (r *Router) Run() error {

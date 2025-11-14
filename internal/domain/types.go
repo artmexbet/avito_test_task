@@ -17,13 +17,3 @@ const (
 	PRStatusOpen   PRStatus = "open"
 	PRStatusMerged PRStatus = "merged"
 )
-
-// ErrorCode defines the type for error codes.
-type ErrorCode string
-
-// Possible values for ErrorCode
-const (
-	ErrorCodeNotFound       ErrorCode = "not_found"
-	ErrorCodeInvalidRequest ErrorCode = "invalid_request"
-	ErrorCodeInternalError  ErrorCode = "internal_error"
-)

@@ -7,4 +7,5 @@ FROM alpine:latest
 RUN apk add curl
 WORKDIR /root/
 COPY --from=builder /app/myapp .
+COPY --from=builder /app/docs ./docs
 CMD ["./myapp"]

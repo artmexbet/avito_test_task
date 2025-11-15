@@ -92,7 +92,7 @@ func (s *APIIntegrationTestSuite) SetupSuite() {
 		Host: "localhost",
 		Port: 5000,
 	}
-	s.router = router.New(cfg, userService, prService, teamService)
+	s.router = router.New(cfg, userService, prService, teamService, nil)
 
 	// Запускаем сервер в фоновом режиме
 	go func() {

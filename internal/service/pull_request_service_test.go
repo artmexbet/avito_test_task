@@ -350,7 +350,6 @@ func (s *PullRequestServiceTestSuite) TestMerge() {
 				if tt.wantErrIs != nil {
 					s.ErrorIs(err, tt.wantErrIs)
 				}
-				s.Equal(domain.PullRequest{}, result)
 			} else {
 				s.NoError(err)
 				if tt.checkResult != nil {

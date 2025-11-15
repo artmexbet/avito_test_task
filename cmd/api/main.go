@@ -13,6 +13,7 @@ import (
 	"github.com/artmexbet/avito_test_task/internal/repository"
 	"github.com/artmexbet/avito_test_task/internal/router"
 	"github.com/artmexbet/avito_test_task/internal/service"
+	statsRetriever "github.com/artmexbet/avito_test_task/internal/stats-retriever"
 	"github.com/artmexbet/avito_test_task/pkg/config"
 	"github.com/artmexbet/avito_test_task/pkg/logger"
 )
@@ -44,13 +45,17 @@ func main() {
 	reviewersRepository := repository.NewReviewersRepository(pg)
 	pullRequestRepository := repository.NewPRRepository(pg)
 	teamRepository := repository.NewTeamRepository(pg)
+
+	statsRepository := repository.NewStatsRepository(pg)
 	slog.InfoContext(ctx, "repositories initialized")
 
 	prService := service.NewPullRequestService(pullRequestRepository, reviewersRepository, userRepository)
 	userService := service.NewUserService(userRepository)
 	teamService := service.NewTeamService(teamRepository, userRepository)
 
-	_router := router.New(cfg.Router, userService, prService, teamService)
+	statsService := statsRetriever.NewStatsRetriever(statsRepository)
+
+	_router := router.New(cfg.Router, userService, prService, teamService, statsService)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)

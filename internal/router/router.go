@@ -3,11 +3,18 @@ package router
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/contrib/v3/swaggerui"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
+	_recover "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
+	slogfiber "github.com/samber/slog-fiber"
 
 	"github.com/artmexbet/avito_test_task/internal/domain"
+	stats_retriever "github.com/artmexbet/avito_test_task/internal/stats-retriever"
 	"github.com/artmexbet/avito_test_task/pkg/config"
 )
 
@@ -27,6 +34,10 @@ type iTeamService interface {
 	Get(ctx context.Context, teamName string) (domain.Team, error)
 }
 
+type iStatsRetriever interface {
+	RetrieveStats(ctx context.Context) ([]stats_retriever.Stats, error)
+}
+
 type Config struct {
 	Host string `yaml:"host" env:"HOST"`
 	Port int    `yaml:"port" env:"PORT"`
@@ -41,6 +52,7 @@ type Router struct {
 	userService        iUserService
 	pullRequestService iPullRequestService
 	teamService        iTeamService
+	statsRetriever     iStatsRetriever
 }
 
 func New(
@@ -48,12 +60,9 @@ func New(
 	userService iUserService,
 	pullRequestService iPullRequestService,
 	teamService iTeamService,
+	statsRetriever iStatsRetriever,
 ) *Router {
 	app := fiber.New()
-
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("OK")
-	})
 
 	router := &Router{
 		config:             config,
@@ -61,11 +70,29 @@ func New(
 		userService:        userService,
 		pullRequestService: pullRequestService,
 		teamService:        teamService,
+		statsRetriever:     statsRetriever,
 		validator:          validator.New(validator.WithRequiredStructEnabled()),
 	}
+	router.initMiddlewares()
 	router.initRoutes()
 
 	return router
+}
+
+func (r *Router) initMiddlewares() {
+	r.router.Use(slogfiber.New(slog.Default()))
+	r.router.Use(_recover.New())
+	r.router.Use(healthcheck.New())
+	r.router.Use(requestid.New())
+	r.router.Use(
+		swaggerui.New(
+			swaggerui.Config{ //nolint:exhaustruct
+				BasePath: "/",
+				Path:     "docs",
+				FilePath: "./docs/openapi.yml",
+			},
+		),
+	)
 }
 
 func (r *Router) initRoutes() {
@@ -81,6 +108,18 @@ func (r *Router) initRoutes() {
 	prs.Post("/create", r.createPullRequest)
 	prs.Post("/merge", r.mergePullRequest)
 	prs.Post("/reassign", r.reassignReviewer)
+
+	if r.statsRetriever == nil {
+		return
+	}
+
+	r.router.Get("/stats/get", func(c *fiber.Ctx) error {
+		s, err := r.statsRetriever.RetrieveStats(c.UserContext())
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("failed to retrieve stats: %v", err))
+		}
+		return c.JSON(s)
+	})
 }
 
 func (r *Router) Run() error {

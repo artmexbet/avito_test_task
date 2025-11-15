@@ -16,19 +16,19 @@ func NewLogger(envType EnvType) *slog.Logger {
 	switch envType {
 	case EnvDevelopment:
 		return slog.New(slog.NewTextHandler(os.Stdout,
-			&slog.HandlerOptions{
+			&slog.HandlerOptions{ //nolint:exhaustruct
 				AddSource: true,
 				Level:     slog.LevelDebug,
 			}))
 	case EnvProduction:
 		return slog.New(slog.NewJSONHandler(
 			os.Stdout,
-			&slog.HandlerOptions{
+			&slog.HandlerOptions{ //nolint:exhaustruct
 				Level: slog.LevelInfo,
 			}))
 	}
 	return slog.New(slog.NewTextHandler(os.Stdout,
-		&slog.HandlerOptions{
+		&slog.HandlerOptions{ //nolint:exhaustruct
 			AddSource: true,
 			Level:     slog.LevelInfo,
 		}))

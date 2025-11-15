@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -14,17 +15,18 @@ const (
 )
 
 type RouterConfig struct {
-	Host string `yaml:"host" env:"HOST"`
-	Port int    `yaml:"port" env:"PORT"`
+	Host            string        `yaml:"host" env:"HOST"`
+	Port            int           `yaml:"port" env:"PORT"`
+	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env:"SHUTDOWN_TIMEOUT" env-default:"15s"`
 }
 
 type PostgresConfig struct {
-	Host     string `yaml:"host" env:"POSTGRES_HOST"`
-	Port     int    `yaml:"port" env:"POSTGRES_PORT"`
-	User     string `yaml:"user" env:"POSTGRES_USER"`
-	Password string `yaml:"password" env:"POSTGRES_PASSWORD"`
-	DBName   string `yaml:"dbname" env:"POSTGRES_DBNAME"`
-	SSLMode  string `yaml:"sslmode" env:"POSTGRES_SSLMODE"`
+	Host     string `yaml:"host" env:"HOST"`
+	Port     int    `yaml:"port" env:"PORT"`
+	User     string `yaml:"user" env:"USER"`
+	Password string `yaml:"password" env:"PASSWORD"`
+	DBName   string `yaml:"dbname" env:"DB"`
+	SSLMode  string `yaml:"sslmode" env:"SSLMODE"`
 }
 
 func (cfg *PostgresConfig) DSN() string {
@@ -33,8 +35,8 @@ func (cfg *PostgresConfig) DSN() string {
 }
 
 type Config struct {
-	Router   RouterConfig   `yaml:"router" env_prefix:"ROUTER_"`
-	Postgres PostgresConfig `yaml:"postgres" env_prefix:"POSTGRES_"`
+	Router   RouterConfig   `yaml:"router" env-prefix:"ROUTER_"`
+	Postgres PostgresConfig `yaml:"postgres" env-prefix:"POSTGRES_"`
 }
 
 func MustParseConfig(source Source, path ...string) Config {

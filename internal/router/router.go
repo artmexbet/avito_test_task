@@ -51,6 +51,10 @@ func New(
 ) *Router {
 	app := fiber.New()
 
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendString("OK")
+	})
+
 	router := &Router{
 		config:             config,
 		router:             app,

@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/artmexbet/avito_test_task/internal/domain"
 	"github.com/artmexbet/avito_test_task/internal/postgres/queries"
@@ -34,8 +37,10 @@ func (p *Postgres) CreatePullRequest(ctx context.Context, pr domain.PullRequest)
 
 func (p *Postgres) GetPullRequestByID(ctx context.Context, prID string) (domain.PullRequest, error) {
 	pr, err := p.queries.GetPullRequestByID(ctx, prID)
-	if err != nil {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return domain.PullRequest{}, fmt.Errorf("error getting pull request by ID: %w", err)
+	} else if errors.Is(err, pgx.ErrNoRows) {
+		return domain.PullRequest{}, domain.ErrPRNotFound
 	}
 
 	return pr.ToDomain(), nil

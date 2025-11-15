@@ -38,7 +38,7 @@ func (r *Router) setUserIsActive(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
 	}
 
-	return ctx.JSON(fiber.Map{"user": user})
+	return ctx.JSON(fiber.Map{"user": fromDomainUser(user)})
 }
 
 func (r *Router) getUserReview(ctx *fiber.Ctx) error {

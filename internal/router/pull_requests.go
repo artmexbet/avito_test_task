@@ -24,20 +24,19 @@ func (r *Router) createPullRequest(ctx *fiber.Ctx) error {
 	}
 
 	pr, err := r.pullRequestService.Create(uCtx, req.ToDomain())
-	if err != nil {
-		if errors.Is(err, domain.ErrPRAlreadyExists) {
-			slog.WarnContext(uCtx, "pull request already exists", "pr_id", req.PullRequestID)
-			return ctx.Status(fiber.StatusConflict).JSON(
-				newErrorResponse(
-					fmt.Sprintf("%s already exists", req.PullRequestID),
-					errorCodePRExists,
-				),
-			)
-		}
-		if errors.Is(err, domain.ErrUserNotFound) {
-			slog.WarnContext(uCtx, "author not found on PR create", "author_id", req.AuthorID)
-			return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
-		}
+	switch {
+	case errors.Is(err, domain.ErrPRAlreadyExists):
+		slog.WarnContext(uCtx, "pull request already exists", "pr_id", req.PullRequestID)
+		return ctx.Status(fiber.StatusConflict).JSON(
+			newErrorResponse(
+				fmt.Sprintf("%s already exists", req.PullRequestID),
+				errorCodePRExists,
+			),
+		)
+	case errors.Is(err, domain.ErrUserNotFound):
+		slog.WarnContext(uCtx, "author not found on PR create", "author_id", req.AuthorID)
+		return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
+	case err != nil:
 		slog.ErrorContext(uCtx, "failed to create PR", "error", err)
 		return fiber.ErrInternalServerError
 	}
@@ -60,17 +59,16 @@ func (r *Router) mergePullRequest(ctx *fiber.Ctx) error {
 	}
 
 	pr, err := r.pullRequestService.Merge(uCtx, req.PullRequestID)
-	if err != nil {
-		if errors.Is(err, domain.ErrPRNotFound) {
-			slog.WarnContext(uCtx, "pull request not found on merge", "pr_id", req.PullRequestID)
-			return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
-		}
-		if errors.Is(err, domain.ErrPRAlreadyMerged) {
-			slog.WarnContext(uCtx, "pull request already merged", "pr_id", req.PullRequestID)
-			return ctx.Status(fiber.StatusConflict).JSON(
-				newErrorResponse("pull request already merged", errorCodePRMerged),
-			)
-		}
+	switch {
+	case errors.Is(err, domain.ErrPRNotFound):
+		slog.WarnContext(uCtx, "pull request not found on merge", "pr_id", req.PullRequestID)
+		return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
+	case errors.Is(err, domain.ErrPRAlreadyMerged):
+		slog.WarnContext(uCtx, "pull request already merged", "pr_id", req.PullRequestID)
+		return ctx.Status(fiber.StatusConflict).JSON(
+			newErrorResponse("pull request already merged", errorCodePRMerged),
+		)
+	case err != nil:
 		slog.ErrorContext(uCtx, "failed to merge PR", "error", err)
 		return fiber.ErrInternalServerError
 	}
@@ -93,33 +91,31 @@ func (r *Router) reassignReviewer(ctx *fiber.Ctx) error {
 	}
 
 	pr, newID, err := r.pullRequestService.ReassignReviewer(uCtx, req.PullRequestID, req.OldUserID)
-	if err != nil {
-		if errors.Is(err, domain.ErrPRNotFound) || errors.Is(err, domain.ErrUserNotFound) {
-			slog.WarnContext(
-				uCtx,
-				"pr or user not found on reassign",
-				"pr_id", req.PullRequestID,
-				"old_user_id", req.OldUserID,
-			)
-			return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
-		}
-		if errors.Is(err, domain.ErrReviewerNotAssigned) {
-			slog.WarnContext(uCtx, "reviewer not assigned to PR", "pr_id", req.PullRequestID, "old_user_id", req.OldUserID)
-			return ctx.Status(fiber.StatusConflict).JSON(
-				newErrorResponse("reviewer is not assigned to this PR", errorCodeNotAssigned),
-			)
-		}
-		if errors.Is(err, domain.ErrNoAvailableReviewers) {
-			slog.WarnContext(
-				uCtx,
-				"no active replacement candidate in team",
-				"pr_id", req.PullRequestID,
-				"old_user_id", req.OldUserID,
-			)
-			return ctx.Status(fiber.StatusConflict).JSON(
-				newErrorResponse("no active replacement candidate in team", errorCodeNoCandidate),
-			)
-		}
+	switch {
+	case errors.Is(err, domain.ErrPRNotFound) || errors.Is(err, domain.ErrUserNotFound):
+		slog.WarnContext(
+			uCtx,
+			"pr or user not found on reassign",
+			"pr_id", req.PullRequestID,
+			"old_user_id", req.OldUserID,
+		)
+		return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
+	case errors.Is(err, domain.ErrReviewerNotAssigned):
+		slog.WarnContext(uCtx, "reviewer not assigned to PR", "pr_id", req.PullRequestID, "old_user_id", req.OldUserID)
+		return ctx.Status(fiber.StatusConflict).JSON(
+			newErrorResponse("reviewer is not assigned to this PR", errorCodeNotAssigned),
+		)
+	case errors.Is(err, domain.ErrNoAvailableReviewers):
+		slog.WarnContext(
+			uCtx,
+			"no active replacement candidate in team",
+			"pr_id", req.PullRequestID,
+			"old_user_id", req.OldUserID,
+		)
+		return ctx.Status(fiber.StatusConflict).JSON(
+			newErrorResponse("no active replacement candidate in team", errorCodeNoCandidate),
+		)
+	case err != nil:
 		slog.ErrorContext(uCtx, "failed to reassign reviewer", "error", err)
 		return fiber.ErrInternalServerError
 	}

@@ -9,27 +9,28 @@ import (
 	"context"
 )
 
-const ExistsUserByID = `-- name: ExistsUserByID :one
+const existsUserByID = `-- name: ExistsUserByID :one
 SELECT EXISTS (SELECT 1
                FROM users
                WHERE id = $1) AS "exists"
 `
 
 func (q *Queries) ExistsUserByID(ctx context.Context, id string) (bool, error) {
-	row := q.db.QueryRow(ctx, ExistsUserByID, id)
+	row := q.db.QueryRow(ctx, existsUserByID, id)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
-const GetActiveUsersByTeamName = `-- name: GetActiveUsersByTeamName :many
+const getActiveUsersByTeamName = `-- name: GetActiveUsersByTeamName :many
 SELECT id, username, team_name, is_active, created_at, updated_at
 FROM users
-WHERE team_name = $1 AND is_active = TRUE
+WHERE team_name = $1
+  AND is_active = TRUE
 `
 
 func (q *Queries) GetActiveUsersByTeamName(ctx context.Context, teamName string) ([]User, error) {
-	rows, err := q.db.Query(ctx, GetActiveUsersByTeamName, teamName)
+	rows, err := q.db.Query(ctx, getActiveUsersByTeamName, teamName)
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +56,14 @@ func (q *Queries) GetActiveUsersByTeamName(ctx context.Context, teamName string)
 	return items, nil
 }
 
-const GetUserByID = `-- name: GetUserByID :one
+const getUserByID = `-- name: GetUserByID :one
 SELECT id, username, team_name, is_active, created_at, updated_at
 FROM users
 WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRow(ctx, GetUserByID, id)
+	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -75,14 +76,14 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	return i, err
 }
 
-const GetUsersByTeamName = `-- name: GetUsersByTeamName :many
+const getUsersByTeamName = `-- name: GetUsersByTeamName :many
 SELECT id, username, team_name, is_active, created_at, updated_at
 FROM users
 WHERE team_name = $1
 `
 
 func (q *Queries) GetUsersByTeamName(ctx context.Context, teamName string) ([]User, error) {
-	rows, err := q.db.Query(ctx, GetUsersByTeamName, teamName)
+	rows, err := q.db.Query(ctx, getUsersByTeamName, teamName)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (q *Queries) GetUsersByTeamName(ctx context.Context, teamName string) ([]Us
 	return items, nil
 }
 
-const SetUserIsActiveByID = `-- name: SetUserIsActiveByID :one
+const setUserIsActiveByID = `-- name: SetUserIsActiveByID :one
 UPDATE users
 SET is_active  = $2,
     updated_at = CURRENT_TIMESTAMP
@@ -122,7 +123,7 @@ type SetUserIsActiveByIDParams struct {
 }
 
 func (q *Queries) SetUserIsActiveByID(ctx context.Context, arg SetUserIsActiveByIDParams) (User, error) {
-	row := q.db.QueryRow(ctx, SetUserIsActiveByID, arg.ID, arg.IsActive)
+	row := q.db.QueryRow(ctx, setUserIsActiveByID, arg.ID, arg.IsActive)
 	var i User
 	err := row.Scan(
 		&i.ID,

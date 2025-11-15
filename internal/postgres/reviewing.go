@@ -29,12 +29,20 @@ func (p *Postgres) AssignReviewersToPR(ctx context.Context, prID string, reviewe
 	defer br.Close() //nolint:errcheck
 
 	errs := make([]error, 0, len(reviewerIDs))
-	br.QueryRow(func(_ int, _ queries.PullRequestsReviewer, err error) {
+	br.QueryRow(func(_ int, r queries.PullRequestsReviewer, err error) {
 		if err != nil {
 			errs = append(errs, err)
 		}
 	})
-	return errors.Join(errs...)
+	err = errors.Join(errs...)
+	if err != nil {
+		return fmt.Errorf("error assigning reviewers to PR: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+	return nil
 }
 
 func (p *Postgres) GetReviewersByPRID(ctx context.Context, prID string) ([]domain.User, error) {

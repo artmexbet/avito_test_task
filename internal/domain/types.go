@@ -14,6 +14,6 @@ func (p *PRStatus) Set(value string) {
 
 // Possible values for PRStatus
 const (
-	PRStatusOpen   PRStatus = "open"
-	PRStatusMerged PRStatus = "merged"
+	PRStatusOpen   PRStatus = "OPEN"
+	PRStatusMerged PRStatus = "MERGED"
 )

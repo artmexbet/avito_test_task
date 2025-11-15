@@ -73,10 +73,11 @@ type pullRequestShortResponse struct {
 // fromDomainPR converts domain.PullRequest to pullRequestResponse
 func fromDomainPR(pr domain.PullRequest) pullRequestResponse {
 	resp := pullRequestResponse{
-		ID:       pr.ID,
-		Name:     pr.Name,
-		AuthorID: pr.AuthorID,
-		Status:   pr.Status,
+		ID:        pr.ID,
+		Name:      pr.Name,
+		AuthorID:  pr.AuthorID,
+		Reviewers: make([]string, 0, len(pr.Reviewers)),
+		Status:    pr.Status,
 	}
 	if len(pr.Reviewers) > 0 {
 		resp.Reviewers = make([]string, 0, len(pr.Reviewers))
@@ -137,7 +138,7 @@ func fromDomainTeam(team domain.Team) getTeamResponse {
 
 type setUserIsActiveRequest struct {
 	UserID   string `json:"user_id" validate:"required"`
-	IsActive bool   `json:"is_active" validate:"required"`
+	IsActive bool   `json:"is_active"`
 }
 
 type reviewPRsResponse struct {
@@ -174,4 +175,20 @@ type reassignReviewerRequest struct {
 type reassignReviewerResponse struct {
 	PR         pullRequestResponse `json:"pr"`
 	ReplacedBy string              `json:"replaced_by"`
+}
+
+type UserResponse struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	TeamName string `json:"team_name"`
+	IsActive bool   `json:"is_active"`
+}
+
+func fromDomainUser(user domain.User) UserResponse {
+	return UserResponse{
+		UserID:   user.ID,
+		Username: user.Username,
+		TeamName: user.TeamName,
+		IsActive: user.IsActive,
+	}
 }

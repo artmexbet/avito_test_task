@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"slices"
+	"time"
 
 	"github.com/artmexbet/avito_test_task/internal/domain"
 )
@@ -59,7 +61,7 @@ func (p *PullRequestService) Create(ctx context.Context, pr domain.PullRequest) 
 	// check author
 	author, err := p.userRepo.GetByID(ctx, pr.AuthorID)
 	if err != nil {
-		return domain.PullRequest{}, fmt.Errorf("error checking finding author: %w", err)
+		return domain.PullRequest{}, fmt.Errorf("error finding author: %w", err)
 	}
 
 	newPR, err := p.pullRequestRepo.Create(ctx, pr)
@@ -72,21 +74,34 @@ func (p *PullRequestService) Create(ctx context.Context, pr domain.PullRequest) 
 	if err != nil {
 		return domain.PullRequest{}, fmt.Errorf("error getting active users by team name: %w", err)
 	}
+	if len(activeUsers) == 0 {
+		return domain.PullRequest{},
+			fmt.Errorf("no active users in team %s: %w", author.TeamName, domain.ErrNoAvailableReviewers)
+	}
+
 	// exclude author from reviewers
 	var reviewerIDs []string
 	for _, user := range activeUsers {
 		if user.ID != author.ID {
 			reviewerIDs = append(reviewerIDs, user.ID)
 		}
-		if len(reviewerIDs) >= 2 {
-			break
-		}
 	}
+	if len(reviewerIDs) == 0 {
+		return domain.PullRequest{}, fmt.Errorf("no available users to assign: %w", domain.ErrNoAvailableReviewers)
+	}
+	if len(reviewerIDs) > 2 {
+		rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+		rng.Shuffle(len(reviewerIDs), func(i, j int) {
+			reviewerIDs[i], reviewerIDs[j] = reviewerIDs[j], reviewerIDs[i]
+		})
+		reviewerIDs = reviewerIDs[:2]
+	}
+
 	if err := p.reviewRepo.AssignToPR(ctx, newPR.ID, reviewerIDs); err != nil {
 		return domain.PullRequest{}, fmt.Errorf("error assigning reviewers to pull request: %w", err)
 	}
 
-	newPR.Reviewers, err = p.reviewRepo.GetByPRID(ctx, pr.AuthorID)
+	newPR.Reviewers, err = p.reviewRepo.GetByPRID(ctx, newPR.ID)
 	if err != nil {
 		return domain.PullRequest{}, fmt.Errorf("error getting author by ID: %w", err)
 	}
@@ -142,16 +157,17 @@ func (p *PullRequestService) ReassignReviewer(
 	prID, oldReviewerID string,
 ) (*domain.PullRequest, string, error) {
 	// check if PR exists
-	exists, err := p.pullRequestRepo.Exists(ctx, prID)
+	pr, err := p.pullRequestRepo.GetByID(ctx, prID)
 	if err != nil {
 		return nil, "", fmt.Errorf("error checking existing pull request: %w", err)
 	}
-	if !exists {
-		return nil, "", fmt.Errorf("pull request with ID %s: %w", prID, domain.ErrPRNotFound)
+
+	if pr.Status == domain.PRStatusMerged {
+		return nil, "", fmt.Errorf("pull request with ID %s: %w", prID, domain.ErrPRAlreadyMerged)
 	}
 
 	// check old reviewer
-	exists, err = p.userRepo.ExistsByID(ctx, oldReviewerID)
+	exists, err := p.userRepo.ExistsByID(ctx, oldReviewerID)
 	if err != nil {
 		return nil, "", fmt.Errorf("error checking existing user: %w", err)
 	}
@@ -178,7 +194,7 @@ func (p *PullRequestService) ReassignReviewer(
 	}
 	r := slices.DeleteFunc(activeUsers, func(user domain.User) bool {
 		_, isAssigned := mapAssignedReviewers[user.ID]
-		return isAssigned || user.ID == oldReviewerID
+		return isAssigned || user.ID == oldReviewerID || user.ID == pr.AuthorID
 	})
 
 	if len(r) == 0 {
@@ -189,9 +205,9 @@ func (p *PullRequestService) ReassignReviewer(
 		return nil, "", fmt.Errorf("error reassigning reviewer: %w", err)
 	}
 
-	pr, err := p.pullRequestRepo.GetByID(ctx, prID)
+	pr.Reviewers, err = p.reviewRepo.GetByPRID(ctx, prID)
 	if err != nil {
-		return nil, "", fmt.Errorf("error getting pull request by ID: %w", err)
+		return nil, "", fmt.Errorf("error getting reviewers of pull request by ID: %w", err)
 	}
 	return &pr, r[0].ID, nil
 }

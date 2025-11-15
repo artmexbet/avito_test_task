@@ -3,12 +3,12 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     team_name VARCHAR(100) NOT NULL REFERENCES teams(name) ON DELETE CASCADE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Накинул индекс на team_id, чтобы получение по команде было быстрее
 -- Верю, что получать пользователей будем сильно чаще, чем добавлять/обновлять
-CREATE INDEX IF NOT EXISTS idx_users_team_id ON users(team_id);
+CREATE INDEX IF NOT EXISTS idx_users_team_id ON users(team_name);
 -- Этот индекс для быстрого поиска активных пользователей, которых можно закинуть как ревьюеров
-CREATE INDEX IF NOT EXISTS idx_users_team_id_and_active ON users(team_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_users_team_id_and_active ON users(team_name, is_active);

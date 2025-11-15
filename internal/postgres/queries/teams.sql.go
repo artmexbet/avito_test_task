@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const AddTeam = `-- name: AddTeam :one
+const addTeam = `-- name: AddTeam :one
 INSERT INTO teams (name)
 VALUES ($1)
 ON CONFLICT (name) DO UPDATE SET name       = EXCLUDED.name,
@@ -18,13 +18,13 @@ RETURNING name, created_at, updated_at
 `
 
 func (q *Queries) AddTeam(ctx context.Context, name string) (Team, error) {
-	row := q.db.QueryRow(ctx, AddTeam, name)
+	row := q.db.QueryRow(ctx, addTeam, name)
 	var i Team
 	err := row.Scan(&i.Name, &i.CreatedAt, &i.UpdatedAt)
 	return i, err
 }
 
-const ExistsTeamByName = `-- name: ExistsTeamByName :one
+const existsTeamByName = `-- name: ExistsTeamByName :one
 SELECT EXISTS (
     SELECT 1
     FROM teams
@@ -33,20 +33,20 @@ SELECT EXISTS (
 `
 
 func (q *Queries) ExistsTeamByName(ctx context.Context, name string) (bool, error) {
-	row := q.db.QueryRow(ctx, ExistsTeamByName, name)
+	row := q.db.QueryRow(ctx, existsTeamByName, name)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
-const GetTeamByName = `-- name: GetTeamByName :one
+const getTeamByName = `-- name: GetTeamByName :one
 SELECT name, created_at, updated_at
 FROM teams
 WHERE name = $1
 `
 
 func (q *Queries) GetTeamByName(ctx context.Context, name string) (Team, error) {
-	row := q.db.QueryRow(ctx, GetTeamByName, name)
+	row := q.db.QueryRow(ctx, getTeamByName, name)
 	var i Team
 	err := row.Scan(&i.Name, &i.CreatedAt, &i.UpdatedAt)
 	return i, err

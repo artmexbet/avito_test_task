@@ -1,8 +1,9 @@
 -- name: AddUsers :batchone
-INSERT INTO users (id, username, team_name)
-VALUES ($1, $2, $3)
+INSERT INTO users (id, username, team_name, is_active)
+VALUES ($1, $2, $3, $4)
 ON CONFLICT (id) DO UPDATE SET username   = EXCLUDED.username,
-                               team_name    = EXCLUDED.team_name,
+                               team_name  = EXCLUDED.team_name,
+                               is_active  = EXCLUDED.is_active,
                                updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 
@@ -36,4 +37,5 @@ RETURNING *;
 -- name: GetActiveUsersByTeamName :many
 SELECT *
 FROM users
-WHERE team_name = $1 AND is_active = TRUE;
+WHERE team_name = $1
+  AND is_active = TRUE;

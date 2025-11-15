@@ -9,15 +9,15 @@ import (
 	"context"
 )
 
-const GetReviewersByPullRequestID = `-- name: GetReviewersByPullRequestID :many
+const getReviewersByPullRequestID = `-- name: GetReviewersByPullRequestID :many
 SELECT u.id, u.username, u.team_name, u.is_active, u.created_at, u.updated_at
-FROM users u
-JOIN pull_requests_reviewers prr ON u.id = prr.reviewer_id
+FROM pull_requests_reviewers prr
+         JOIN users u ON u.id = prr.reviewer_id
 WHERE prr.pull_request_id = $1
 `
 
 func (q *Queries) GetReviewersByPullRequestID(ctx context.Context, pullRequestID string) ([]User, error) {
-	rows, err := q.db.Query(ctx, GetReviewersByPullRequestID, pullRequestID)
+	rows, err := q.db.Query(ctx, getReviewersByPullRequestID, pullRequestID)
 	if err != nil {
 		return nil, err
 	}
@@ -43,14 +43,15 @@ func (q *Queries) GetReviewersByPullRequestID(ctx context.Context, pullRequestID
 	return items, nil
 }
 
-const GetUsersReviewingPullRequest = `-- name: GetUsersReviewingPullRequest :many
-SELECT pr.id, pr.name, pr.author_id, pr.created_at, pr.merged_at FROM pull_requests_reviewers prr
-JOIN pull_requests pr ON pr.id = prr.pull_request_id AND pr.merged_at IS NULL
+const getUsersReviewingPullRequest = `-- name: GetUsersReviewingPullRequest :many
+SELECT pr.id, pr.name, pr.author_id, pr.created_at, pr.merged_at
+FROM pull_requests_reviewers prr
+         JOIN pull_requests pr ON pr.id = prr.pull_request_id AND pr.merged_at IS NULL
 WHERE prr.reviewer_id = $1
 `
 
 func (q *Queries) GetUsersReviewingPullRequest(ctx context.Context, reviewerID string) ([]PullRequest, error) {
-	rows, err := q.db.Query(ctx, GetUsersReviewingPullRequest, reviewerID)
+	rows, err := q.db.Query(ctx, getUsersReviewingPullRequest, reviewerID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +76,11 @@ func (q *Queries) GetUsersReviewingPullRequest(ctx context.Context, reviewerID s
 	return items, nil
 }
 
-const IsUserReviewerForPullRequest = `-- name: IsUserReviewerForPullRequest :one
-SELECT EXISTS (
-    SELECT 1
-    FROM pull_requests_reviewers
-    WHERE pull_request_id = $1 AND reviewer_id = $2
-) AS "exists"
+const isUserReviewerForPullRequest = `-- name: IsUserReviewerForPullRequest :one
+SELECT EXISTS (SELECT 1
+               FROM pull_requests_reviewers
+               WHERE pull_request_id = $1
+                 AND reviewer_id = $2) AS "exists"
 `
 
 type IsUserReviewerForPullRequestParams struct {
@@ -89,16 +89,17 @@ type IsUserReviewerForPullRequestParams struct {
 }
 
 func (q *Queries) IsUserReviewerForPullRequest(ctx context.Context, arg IsUserReviewerForPullRequestParams) (bool, error) {
-	row := q.db.QueryRow(ctx, IsUserReviewerForPullRequest, arg.PullRequestID, arg.ReviewerID)
+	row := q.db.QueryRow(ctx, isUserReviewerForPullRequest, arg.PullRequestID, arg.ReviewerID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
-const ReassignReviewerForPullRequest = `-- name: ReassignReviewerForPullRequest :exec
+const reassignReviewerForPullRequest = `-- name: ReassignReviewerForPullRequest :exec
 UPDATE pull_requests_reviewers
 SET reviewer_id = $2
-WHERE pull_request_id = $1 AND reviewer_id = $3
+WHERE pull_request_id = $1
+  AND reviewer_id = $3
 `
 
 type ReassignReviewerForPullRequestParams struct {
@@ -108,6 +109,6 @@ type ReassignReviewerForPullRequestParams struct {
 }
 
 func (q *Queries) ReassignReviewerForPullRequest(ctx context.Context, arg ReassignReviewerForPullRequestParams) error {
-	_, err := q.db.Exec(ctx, ReassignReviewerForPullRequest, arg.PullRequestID, arg.ReviewerID, arg.ReviewerID_2)
+	_, err := q.db.Exec(ctx, reassignReviewerForPullRequest, arg.PullRequestID, arg.ReviewerID, arg.ReviewerID_2)
 	return err
 }

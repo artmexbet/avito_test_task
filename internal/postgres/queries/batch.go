@@ -16,11 +16,12 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
-const AddUsers = `-- name: AddUsers :batchone
-INSERT INTO users (id, username, team_name)
-VALUES ($1, $2, $3)
+const addUsers = `-- name: AddUsers :batchone
+INSERT INTO users (id, username, team_name, is_active)
+VALUES ($1, $2, $3, $4)
 ON CONFLICT (id) DO UPDATE SET username   = EXCLUDED.username,
-                               team_name    = EXCLUDED.team_name,
+                               team_name  = EXCLUDED.team_name,
+                               is_active  = EXCLUDED.is_active,
                                updated_at = CURRENT_TIMESTAMP
 RETURNING id, username, team_name, is_active, created_at, updated_at
 `
@@ -35,6 +36,7 @@ type AddUsersParams struct {
 	ID       string
 	Username string
 	TeamName string
+	IsActive bool
 }
 
 func (q *Queries) AddUsers(ctx context.Context, arg []AddUsersParams) *AddUsersBatchResults {
@@ -44,8 +46,9 @@ func (q *Queries) AddUsers(ctx context.Context, arg []AddUsersParams) *AddUsersB
 			a.ID,
 			a.Username,
 			a.TeamName,
+			a.IsActive,
 		}
-		batch.Queue(AddUsers, vals...)
+		batch.Queue(addUsers, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
 	return &AddUsersBatchResults{br, len(arg), false}
@@ -81,7 +84,7 @@ func (b *AddUsersBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const AssignReviewerToPullRequest = `-- name: AssignReviewerToPullRequest :batchone
+const assignReviewerToPullRequest = `-- name: AssignReviewerToPullRequest :batchone
 INSERT INTO pull_requests_reviewers (pull_request_id, reviewer_id)
 VALUES ($1, $2)
 ON CONFLICT (pull_request_id, reviewer_id) DO NOTHING
@@ -106,7 +109,7 @@ func (q *Queries) AssignReviewerToPullRequest(ctx context.Context, arg []AssignR
 			a.PullRequestID,
 			a.ReviewerID,
 		}
-		batch.Queue(AssignReviewerToPullRequest, vals...)
+		batch.Queue(assignReviewerToPullRequest, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
 	return &AssignReviewerToPullRequestBatchResults{br, len(arg), false}
@@ -135,7 +138,7 @@ func (b *AssignReviewerToPullRequestBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const BatchExistsUserByID = `-- name: BatchExistsUserByID :batchone
+const batchExistsUserByID = `-- name: BatchExistsUserByID :batchone
 SELECT EXISTS (SELECT 1
                FROM users
                WHERE id = $1) AS "exists"
@@ -153,7 +156,7 @@ func (q *Queries) BatchExistsUserByID(ctx context.Context, id []string) *BatchEx
 		vals := []interface{}{
 			a,
 		}
-		batch.Queue(BatchExistsUserByID, vals...)
+		batch.Queue(batchExistsUserByID, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
 	return &BatchExistsUserByIDBatchResults{br, len(id), false}

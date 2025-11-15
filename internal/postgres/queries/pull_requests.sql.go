@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const CreatePullRequest = `-- name: CreatePullRequest :one
+const createPullRequest = `-- name: CreatePullRequest :one
 INSERT INTO pull_requests (id, name, author_id)
 VALUES ($1, $2, $3)
 RETURNING id, name, author_id, created_at, merged_at
@@ -22,7 +22,7 @@ type CreatePullRequestParams struct {
 }
 
 func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error) {
-	row := q.db.QueryRow(ctx, CreatePullRequest, arg.ID, arg.Name, arg.AuthorID)
+	row := q.db.QueryRow(ctx, createPullRequest, arg.ID, arg.Name, arg.AuthorID)
 	var i PullRequest
 	err := row.Scan(
 		&i.ID,
@@ -34,7 +34,7 @@ func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestPa
 	return i, err
 }
 
-const ExistsPullRequestByID = `-- name: ExistsPullRequestByID :one
+const existsPullRequestByID = `-- name: ExistsPullRequestByID :one
 SELECT EXISTS (
     SELECT 1
     FROM pull_requests
@@ -43,20 +43,20 @@ SELECT EXISTS (
 `
 
 func (q *Queries) ExistsPullRequestByID(ctx context.Context, id string) (bool, error) {
-	row := q.db.QueryRow(ctx, ExistsPullRequestByID, id)
+	row := q.db.QueryRow(ctx, existsPullRequestByID, id)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
-const GetPullRequestByID = `-- name: GetPullRequestByID :one
+const getPullRequestByID = `-- name: GetPullRequestByID :one
 SELECT id, name, author_id, created_at, merged_at
 FROM pull_requests
 WHERE id = $1
 `
 
 func (q *Queries) GetPullRequestByID(ctx context.Context, id string) (PullRequest, error) {
-	row := q.db.QueryRow(ctx, GetPullRequestByID, id)
+	row := q.db.QueryRow(ctx, getPullRequestByID, id)
 	var i PullRequest
 	err := row.Scan(
 		&i.ID,
@@ -68,7 +68,7 @@ func (q *Queries) GetPullRequestByID(ctx context.Context, id string) (PullReques
 	return i, err
 }
 
-const MergePullRequest = `-- name: MergePullRequest :one
+const mergePullRequest = `-- name: MergePullRequest :one
 UPDATE pull_requests
 SET merged_at = CURRENT_TIMESTAMP
 WHERE id = $1
@@ -76,7 +76,7 @@ RETURNING id, name, author_id, created_at, merged_at
 `
 
 func (q *Queries) MergePullRequest(ctx context.Context, id string) (PullRequest, error) {
-	row := q.db.QueryRow(ctx, MergePullRequest, id)
+	row := q.db.QueryRow(ctx, mergePullRequest, id)
 	var i PullRequest
 	err := row.Scan(
 		&i.ID,

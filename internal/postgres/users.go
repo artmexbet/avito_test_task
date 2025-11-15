@@ -23,6 +23,7 @@ func (p *Postgres) AddUsers(ctx context.Context, users []domain.User) ([]domain.
 			ID:       user.ID,
 			Username: user.Username,
 			TeamName: user.TeamName,
+			IsActive: user.IsActive,
 		}
 	}
 	br := q.AddUsers(ctx, params)

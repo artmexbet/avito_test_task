@@ -87,7 +87,7 @@ func (s *PullRequestServiceTestSuite) TestCreate() {
 					Return(nil).Once()
 
 				mockReviewRepo.EXPECT().
-					GetByPRID(ctx, "author-1").
+					GetByPRID(ctx, "pr-1").
 					Return(reviewers, nil).Once()
 			},
 			wantErr: false,
@@ -141,7 +141,7 @@ func (s *PullRequestServiceTestSuite) TestCreate() {
 					Return(nil).Once()
 
 				mockReviewRepo.EXPECT().
-					GetByPRID(ctx, "author-1").
+					GetByPRID(ctx, "pr-1").
 					Return(reviewers, nil).Once()
 			},
 			wantErr: false,
@@ -472,24 +472,31 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 					{ID: "user-1", Username: "alice", TeamName: "backend-team", IsActive: true},
 					{ID: "user-2", Username: "bob", TeamName: "backend-team", IsActive: true},
 					{ID: "user-3", Username: "charlie", TeamName: "backend-team", IsActive: true},
+					{ID: "user-4", Username: "tony", TeamName: "backend-team", IsActive: true},
 				}
-				updatedPR := domain.PullRequest{
-					ID:     "pr-1",
-					Status: domain.PRStatusOpen,
+				updatedReviewers := []domain.User{
+					{ID: "user-2", Username: "bob", TeamName: "backend-team", IsActive: true},
+					{ID: "user-4", Username: "tony", TeamName: "backend-team", IsActive: true},
+				}
+				pr := domain.PullRequest{
+					ID:        "pr-1",
+					Status:    domain.PRStatusOpen,
+					Reviewers: assignedReviewers,
+					AuthorID:  "user-3",
 				}
 
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(pr, nil).Once()
 				mockUserRepo.EXPECT().ExistsByID(ctx, "user-1").Return(true, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(assignedReviewers, nil).Once()
 				mockUserRepo.EXPECT().GetActiveByTeamName(ctx, "backend-team").Return(activeUsers, nil).Once()
-				mockReviewRepo.EXPECT().Reassign(ctx, "pr-1", "user-3", "user-1").Return(nil).Once()
-				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(updatedPR, nil).Once()
+				mockReviewRepo.EXPECT().Reassign(ctx, "pr-1", "user-4", "user-1").Return(nil).Once()
+				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(updatedReviewers, nil).Once()
 			},
 			wantErr: false,
 			checkResult: func(result *domain.PullRequest, newID string) {
 				s.NotNil(result)
 				s.Equal("pr-1", result.ID)
-				s.Equal("user-3", newID)
+				s.Equal("user-4", newID)
 			},
 		},
 		{
@@ -497,7 +504,7 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 			prID:          "non-existent-pr",
 			oldReviewerID: "user-1",
 			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository, mockUserRepo *mockiPRUserRepository) {
-				mockPRRepo.EXPECT().Exists(ctx, "non-existent-pr").Return(false, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "non-existent-pr").Return(domain.PullRequest{}, domain.ErrPRNotFound).Once()
 			},
 			wantErr:   true,
 			wantErrIs: domain.ErrPRNotFound,
@@ -507,7 +514,7 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 			prID:          "pr-1",
 			oldReviewerID: "non-existent-user",
 			arrangeFunc: func(ctx context.Context, mockPRRepo *mockiPullRequestRepository, mockReviewRepo *mockiReviewRepository, mockUserRepo *mockiPRUserRepository) {
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, nil).Once()
 				mockUserRepo.EXPECT().ExistsByID(ctx, "non-existent-user").Return(false, nil).Once()
 			},
 			wantErr:   true,
@@ -522,7 +529,7 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 					{ID: "user-1", Username: "alice", TeamName: "backend-team"},
 					{ID: "user-2", Username: "bob", TeamName: "backend-team"},
 				}
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, nil).Once()
 				mockUserRepo.EXPECT().ExistsByID(ctx, "user-3").Return(true, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(assignedReviewers, nil).Once()
 			},
@@ -542,7 +549,7 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 					{ID: "user-1", Username: "alice", TeamName: "small-team", IsActive: true},
 					{ID: "user-2", Username: "bob", TeamName: "small-team", IsActive: true},
 				}
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{AuthorID: "user-3"}, nil).Once()
 				mockUserRepo.EXPECT().ExistsByID(ctx, "user-1").Return(true, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(assignedReviewers, nil).Once()
 				mockUserRepo.EXPECT().GetActiveByTeamName(ctx, "small-team").Return(activeUsers, nil).Once()
@@ -564,7 +571,7 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 					{ID: "user-2", Username: "bob", TeamName: "backend-team", IsActive: true},
 					{ID: "user-3", Username: "charlie", TeamName: "backend-team", IsActive: true},
 				}
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{AuthorID: "user-4"}, nil).Once()
 				mockUserRepo.EXPECT().ExistsByID(ctx, "user-1").Return(true, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(assignedReviewers, nil).Once()
 				mockUserRepo.EXPECT().GetActiveByTeamName(ctx, "backend-team").Return(activeUsers, nil).Once()
@@ -586,12 +593,12 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 					{ID: "user-2", Username: "bob", TeamName: "backend-team", IsActive: true},
 					{ID: "user-3", Username: "charlie", TeamName: "backend-team", IsActive: true},
 				}
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{AuthorID: "user-4"}, nil).Once()
 				mockUserRepo.EXPECT().ExistsByID(ctx, "user-1").Return(true, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(assignedReviewers, nil).Once()
 				mockUserRepo.EXPECT().GetActiveByTeamName(ctx, "backend-team").Return(activeUsers, nil).Once()
 				mockReviewRepo.EXPECT().Reassign(ctx, "pr-1", "user-3", "user-1").Return(nil).Once()
-				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{}, errors.New("failed to get PR")).Once()
+				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return([]domain.User{}, errors.New("failed to get reviewers")).Once()
 			},
 			wantErr: true,
 		},
@@ -606,7 +613,7 @@ func (s *PullRequestServiceTestSuite) TestReassignReviewer() {
 				activeUsers := []domain.User{
 					{ID: "user-1", Username: "alice", TeamName: "solo-team", IsActive: true},
 				}
-				mockPRRepo.EXPECT().Exists(ctx, "pr-1").Return(true, nil).Once()
+				mockPRRepo.EXPECT().GetByID(ctx, "pr-1").Return(domain.PullRequest{AuthorID: "user-2"}, nil).Once()
 				mockUserRepo.EXPECT().ExistsByID(ctx, "user-1").Return(true, nil).Once()
 				mockReviewRepo.EXPECT().GetByPRID(ctx, "pr-1").Return(assignedReviewers, nil).Once()
 				mockUserRepo.EXPECT().GetActiveByTeamName(ctx, "solo-team").Return(activeUsers, nil).Once()

@@ -13,7 +13,7 @@ type PullRequest struct {
 	Name      string
 	AuthorID  string
 	CreatedAt time.Time
-	MergedAt  time.Time
+	MergedAt  *time.Time
 }
 
 type PullRequestsReviewer struct {
@@ -25,7 +25,7 @@ type PullRequestsReviewer struct {
 type Team struct {
 	Name      string
 	CreatedAt time.Time
-	UpdatedAt time.Time
+	UpdatedAt *time.Time
 }
 
 type User struct {
@@ -34,5 +34,5 @@ type User struct {
 	TeamName  string
 	IsActive  bool
 	CreatedAt time.Time
-	UpdatedAt time.Time
+	UpdatedAt *time.Time
 }

@@ -10,19 +10,50 @@ const successfulRequests = new Counter('successful_requests');
 
 // Конфигурация нагрузочного тестирования
 export const options = {
-    stages: [
-        {duration: '30s', target: 10},   // Разогрев: 10 пользователей за 30 секунд
-        {duration: '1m', target: 50},    // Увеличение нагрузки: 50 пользователей за 1 минуту
-        {duration: '2m', target: 100},   // Увеличиваем пик: 100 пользователей за 2 минуты
-        {duration: '1m', target: 50},    // Снижение нагрузки: 50 пользователей
-        {duration: '30s', target: 0},    // Остановка
-    ],
+    scenarios: {
+        // Сценарий с постоянным RPS
+        constant_rps: {
+            executor: 'constant-arrival-rate',
+            rate: 100,              // 100 запросов в секунду
+            timeUnit: '1s',
+            duration: '2m',
+            preAllocatedVUs: 50,
+            maxVUs: 200,
+        },
+        // Сценарий с увеличивающимся RPS
+        ramping_rps: {
+            executor: 'ramping-arrival-rate',
+            startRate: 10,
+            timeUnit: '1s',
+            preAllocatedVUs: 50,
+            maxVUs: 500,
+            stages: [
+                {duration: '30s', target: 50},   // 50 RPS
+                {duration: '1m', target: 200},   // 200 RPS
+                {duration: '1m', target: 500},   // 500 RPS
+                {duration: '30s', target: 1000}, // 1000 RPS (пик)
+                {duration: '30s', target: 0},
+            ],
+        },
+        default: {
+            executor: 'ramping-vus',
+            stages: [
+                {duration: '30s', target: 10},   // Разогрев: 10 пользователей за 30 секунд
+                {duration: '1m', target: 50},    // Увеличение нагрузки: 50 пользователей за 1 минуту
+                {duration: '2m', target: 100},   // Увеличиваем пик: 100 пользователей за 2 минуты
+                {duration: '1m', target: 50},    // Снижение нагрузки: 50 пользователей
+                {duration: '30s', target: 0},    // Остановка
+            ]
+        }
+    },
     thresholds: {
-        http_req_duration: ['p(95)<500', 'p(99)<1000'], // 95% запросов < 500ms, 99% < 1s
-        http_req_failed: ['rate<0.05'],                  // Менее 5% ошибок
-        error_rate: ['rate<0.05'],                       // Менее 5% бизнес-ошибок
+        http_req_duration: ['p(95)<500', 'p(99)<1000'],
+        http_req_failed: ['rate<0.05'],
+        http_reqs: ['rate>100'],  // Минимум 100 RPS
+        error_rate: ['rate<0.05']
     },
 };
+;
 
 // Базовый URL API (можно переопределить через переменную окружения)
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';

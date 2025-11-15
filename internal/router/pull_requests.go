@@ -65,9 +65,7 @@ func (r *Router) mergePullRequest(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(errorResponseNotFound)
 	case errors.Is(err, domain.ErrPRAlreadyMerged):
 		slog.WarnContext(uCtx, "pull request already merged", "pr_id", req.PullRequestID)
-		return ctx.Status(fiber.StatusConflict).JSON(
-			newErrorResponse("pull request already merged", errorCodePRMerged),
-		)
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"pr": fromDomainPR(pr)})
 	case err != nil:
 		slog.ErrorContext(uCtx, "failed to merge PR", "error", err)
 		return fiber.ErrInternalServerError

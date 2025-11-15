@@ -9,6 +9,9 @@ help: ## Показать справку
 	@echo "  make test-all          - Запустить все тесты (unit + integration)"
 	@echo "  make clean             - Удалить сгенерированные моки"
 	@echo "  make all               - Запустить lint и mock"
+	@echo "  make load-testing      - Запустить нагрузочное тестирование с помощью k6"
+	@echo "  make up                - Запустить сервисы в docker-compose.dev.yml"
+	@echo "  make down              - Остановить сервисы в docker-compose.dev.yml"
 
 lint: ## Запустить golangci-lint
 	golangci-lint run ./...
@@ -30,3 +33,11 @@ test-all: ## Запустить все тесты (unit + integration)
 
 all: lint mock ## Запустить lint и сгенерировать моки
 
+load-testing:
+	k6 run ./load-testing/scripts/load-test.js
+
+up:
+	docker-compose -f docker-compose.dev.yml up -d --build
+
+down:
+	docker-compose -f docker-compose.dev.yml down

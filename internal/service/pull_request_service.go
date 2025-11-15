@@ -118,7 +118,7 @@ func (p *PullRequestService) Merge(ctx context.Context, prID string) (domain.Pul
 
 	// check if PR is already merged
 	if pr.Status == domain.PRStatusMerged {
-		return domain.PullRequest{}, fmt.Errorf("pull request with ID %s: %w", prID, domain.ErrPRAlreadyMerged)
+		return pr, fmt.Errorf("pull request with ID %s: %w", prID, domain.ErrPRAlreadyMerged)
 	}
 
 	mergedPR, err := p.pullRequestRepo.Merge(ctx, prID)

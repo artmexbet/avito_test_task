@@ -1,6 +1,10 @@
 package router
 
-import "github.com/artmexbet/avito_test_task/internal/domain"
+import (
+	"time"
+
+	"github.com/artmexbet/avito_test_task/internal/domain"
+)
 
 // При использовании не с Fiber можно генерировать анмаршаллер //go:generate easyjson -all models.go
 
@@ -13,7 +17,6 @@ const (
 	errorCodeNotFound  ErrorCode = "NOT_FOUND"
 	// PullRequest specific error codes
 	errorCodePRExists    ErrorCode = "PR_EXISTS"
-	errorCodePRMerged    ErrorCode = "PR_MERGED"
 	errorCodeNotAssigned ErrorCode = "NOT_ASSIGNED"
 	errorCodeNoCandidate ErrorCode = "NO_CANDIDATE"
 )
@@ -60,6 +63,7 @@ type pullRequestResponse struct {
 	AuthorID  string          `json:"author_id"`
 	Reviewers []string        `json:"assigned_reviewers,omitempty"`
 	Status    domain.PRStatus `json:"status"`
+	MergedAt  time.Time       `json:"merged_at"`
 }
 
 // pullRequestShortResponse represents a shortened response structure for a pull request.
@@ -78,6 +82,7 @@ func fromDomainPR(pr domain.PullRequest) pullRequestResponse {
 		AuthorID:  pr.AuthorID,
 		Reviewers: make([]string, 0, len(pr.Reviewers)),
 		Status:    pr.Status,
+		MergedAt:  pr.MergedAt,
 	}
 	if len(pr.Reviewers) > 0 {
 		resp.Reviewers = make([]string, 0, len(pr.Reviewers))

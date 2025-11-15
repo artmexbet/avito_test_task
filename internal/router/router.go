@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/contrib/v3/swaggerui"
+	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	_recover "github.com/gofiber/fiber/v2/middleware/recover"
@@ -85,13 +85,12 @@ func (r *Router) initMiddlewares() {
 	r.router.Use(healthcheck.New())
 	r.router.Use(requestid.New())
 	r.router.Use(
-		swaggerui.New(
-			swaggerui.Config{ //nolint:exhaustruct
-				BasePath: "/",
-				Path:     "docs",
-				FilePath: "./docs/openapi.yml",
-			},
-		),
+		swagger.New(swagger.Config{ //nolint:exhaustruct
+			BasePath: "/",
+			Title:    "Avito Test Task API",
+			FilePath: "./docs/openapi.yml",
+			Path:     "docs",
+		}),
 	)
 }
 

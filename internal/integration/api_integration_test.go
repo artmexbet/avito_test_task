@@ -175,7 +175,7 @@ func (s *APIIntegrationTestSuite) TestAddTeamAPI() {
 	s.Equal("backend-team", team["team_name"])
 }
 
-// TestAddTeamAlreadyExists тестирует POST /teams/add для существующей команды
+// TestAddTeamAlreadyExists тестирует POST /team/add для существующей команды
 func (s *APIIntegrationTestSuite) TestAddTeamAlreadyExists() {
 	teamReq := map[string]interface{}{
 		"team_name": "duplicate-team",
@@ -237,7 +237,7 @@ func (s *APIIntegrationTestSuite) TestSetUserIsActiveAPI() {
 		},
 	}
 
-	resp, _ := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, _ := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	// Деактивируем пользователя

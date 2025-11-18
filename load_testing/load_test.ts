@@ -116,7 +116,7 @@ export default function () {
             });
 
             const createTeamStart = Date.now();
-            const createTeamRes = http.post(`${BASE_URL}/teams/add`, teamPayload, {headers});
+            const createTeamRes = http.post(`${BASE_URL}/team/add`, teamPayload, {headers});
             teamCreationTime.add(Date.now() - createTeamStart);
 
             const success = checkResponse(createTeamRes, 201, 'Create Team');
@@ -147,7 +147,7 @@ export default function () {
 
         // Тест 2: Получение команды
         group('Get Team', () => {
-            const getTeamRes = http.get(`${BASE_URL}/teams/get?team_name=${teamName}`, {headers});
+            const getTeamRes = http.get(`${BASE_URL}/team/get?team_name=${teamName}`, {headers});
             checkResponse(getTeamRes, 200, 'Get Team');
 
             if (getTeamRes.status === 200) {
@@ -383,7 +383,7 @@ export function smokeTest() {
         ],
     });
 
-    const res = http.post(`${BASE_URL}/teams/add`, teamPayload, {headers});
+    const res = http.post(`${BASE_URL}/team/add`, teamPayload, {headers});
     check(res, {
         'Smoke test: API is available': (r) => r.status === 201,
     });

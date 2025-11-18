@@ -37,7 +37,7 @@ load-testing:
 	k6 run ./load-testing/scripts/load-test.js
 
 up:
-	docker-compose -f docker-compose.dev.yml up -d --build
+	docker-compose -f ./deploy/docker-compose.yml up -d --build
 
 down:
-	docker-compose -f docker-compose.dev.yml down
+	docker-compose -f ./deploy/docker-compose.yml down

@@ -99,7 +99,7 @@ func (r *Router) initRoutes() {
 	teams.Post("/add", r.addTeam)
 	teams.Get("/get", r.getTeam)
 
-	users := r.router.Group("/user")
+	users := r.router.Group("/users")
 	users.Post("/setIsActive", r.setUserIsActive)
 	users.Get("/getReview", r.getUserReview)
 

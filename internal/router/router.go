@@ -95,11 +95,11 @@ func (r *Router) initMiddlewares() {
 }
 
 func (r *Router) initRoutes() {
-	teams := r.router.Group("/teams")
+	teams := r.router.Group("/team")
 	teams.Post("/add", r.addTeam)
 	teams.Get("/get", r.getTeam)
 
-	users := r.router.Group("/users")
+	users := r.router.Group("/user")
 	users.Post("/setIsActive", r.setUserIsActive)
 	users.Get("/getReview", r.getUserReview)
 

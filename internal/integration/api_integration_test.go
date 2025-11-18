@@ -154,7 +154,7 @@ func (s *APIIntegrationTestSuite) makeRequest(method, path string, body interfac
 	return resp, respBody
 }
 
-// TestAddTeamAPI тестирует POST /teams/add
+// TestAddTeamAPI тестирует POST /team/add
 func (s *APIIntegrationTestSuite) TestAddTeamAPI() {
 	teamReq := map[string]interface{}{
 		"team_name": "backend-team",
@@ -164,7 +164,7 @@ func (s *APIIntegrationTestSuite) TestAddTeamAPI() {
 		},
 	}
 
-	resp, body := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, body := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	var response map[string]interface{}
@@ -185,11 +185,11 @@ func (s *APIIntegrationTestSuite) TestAddTeamAlreadyExists() {
 	}
 
 	// Первый запрос должен пройти успешно
-	resp, _ := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, _ := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	// Второй запрос должен вернуть ошибку
-	resp, body := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, body := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusBadRequest, resp.StatusCode)
 
 	var response map[string]interface{}
@@ -200,7 +200,7 @@ func (s *APIIntegrationTestSuite) TestAddTeamAlreadyExists() {
 	s.Equal("TEAM_EXISTS", errorObj["code"])
 }
 
-// TestGetTeamAPI тестирует GET /teams/get
+// TestGetTeamAPI тестирует GET /team/get
 func (s *APIIntegrationTestSuite) TestGetTeamAPI() {
 	// Сначала создаем команду
 	teamReq := map[string]interface{}{
@@ -211,11 +211,11 @@ func (s *APIIntegrationTestSuite) TestGetTeamAPI() {
 		},
 	}
 
-	resp, _ := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, _ := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	// Получаем команду
-	resp, body := s.makeRequest("GET", "/teams/get?team_name=test-team", nil)
+	resp, body := s.makeRequest("GET", "/team/get?team_name=test-team", nil)
 	s.Equal(http.StatusOK, resp.StatusCode)
 
 	var team map[string]interface{}
@@ -269,7 +269,7 @@ func (s *APIIntegrationTestSuite) TestCreatePRAPI() {
 		},
 	}
 
-	resp, _ := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, _ := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	// Создаем PR
@@ -304,7 +304,7 @@ func (s *APIIntegrationTestSuite) TestMergePRAPI() {
 		},
 	}
 
-	resp, _ := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, _ := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	prReq := map[string]interface{}{
@@ -345,7 +345,7 @@ func (s *APIIntegrationTestSuite) TestReassignReviewerAPI() {
 		},
 	}
 
-	resp, _ := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, _ := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	prReq := map[string]interface{}{
@@ -394,7 +394,7 @@ func (s *APIIntegrationTestSuite) TestGetUserReviewAPI() {
 		},
 	}
 
-	resp, _ := s.makeRequest("POST", "/teams/add", teamReq)
+	resp, _ := s.makeRequest("POST", "/team/add", teamReq)
 	s.Equal(http.StatusCreated, resp.StatusCode)
 
 	prReq := map[string]interface{}{
@@ -423,7 +423,7 @@ func (s *APIIntegrationTestSuite) TestGetUserReviewAPI() {
 // TestErrorCases тестирует различные ошибочные случаи
 func (s *APIIntegrationTestSuite) TestErrorCases() {
 	// Попытка получить несуществующую команду
-	resp, body := s.makeRequest("GET", "/teams/get?team_name=non-existent", nil)
+	resp, body := s.makeRequest("GET", "/team/get?team_name=non-existent", nil)
 	s.Equal(http.StatusNotFound, resp.StatusCode)
 
 	var response map[string]interface{}
